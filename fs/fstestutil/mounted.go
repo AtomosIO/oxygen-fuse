@@ -1,15 +1,15 @@
 package fstestutil
 
 import (
+	"bazil.org/fuse"
+	"bazil.org/fuse/fs"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"testing"
 	"time"
-
-	"bazil.org/fuse"
-	"bazil.org/fuse/fs"
 )
 
 // Mount contains information about the mount for the test to use.
@@ -36,9 +36,10 @@ func (mnt *Mount) Close() {
 	mnt.closed = true
 	for tries := 0; tries < 1000; tries++ {
 		err := fuse.Unmount(mnt.Dir)
+		log.Printf("%d", tries)
 		if err != nil {
 			// TODO do more than log?
-			log.Printf("unmount error: %v", err)
+			log.Printf("lllklunmount error: %d %v", tries, err)
 			time.Sleep(10 * time.Millisecond)
 			continue
 		}
@@ -104,6 +105,7 @@ func MountedT(t testing.TB, filesys fs.FS) (*Mount, error) {
 	srv := &fs.Server{
 		FS: filesys,
 	}
+	fmt.Println("testtt")
 	if debug {
 		srv.Debug = func(msg interface{}) {
 			t.Logf("FUSE: %s", msg)

@@ -1,3 +1,17 @@
+How to start developing oxygen-fuse-fs:
+  - mkdir ~/atomos
+  - cd ~/atomos
+  - git clone https://github.com/hesamrabeti/oxygen-fuse-fs
+  - git clone https://github.com/githubnemo/CompileDaemon.git
+  - cd CompileDaemon
+  - go build
+  - cd ../oxygen-fuse-fs/oxygenfs
+  - ../../CompileDaemon/CompileDaemon -command="go test -cover" &
+
+
+
+<<<<<<<<<<<<<<<<<< TEXT BELOW IS FROM BAZIL.ORG/FUSE <<<<<<<<<<<<<<<<<<
+
 bazil.org/fuse -- Filesystems in Go
 ===================================
 
@@ -21,3 +35,5 @@ API docs: http://godoc.org/bazil.org/fuse
 
 Our thanks to Russ Cox for his fuse library, which this project is
 based on.
+
+------------------------------------

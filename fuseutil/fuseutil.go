@@ -17,4 +17,5 @@ func HandleRead(req *fuse.ReadRequest, resp *fuse.ReadResponse, data []byte) {
 	}
 	n := copy(resp.Data[:req.Size], data)
 	resp.Data = resp.Data[:n]
+
 }
