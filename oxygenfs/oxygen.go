@@ -82,7 +82,7 @@ func (fs *OxygenFS) processRequest(r fuse.Request) {
 		fs.requestsMutex.Unlock()
 	}
 
-	fmt.Println(time.Since(FuncStart).Nanoseconds())
+	//fmt.Println(time.Since(FuncStart).Nanoseconds())
 
 	switch r := r.(type) {
 	default:
@@ -148,21 +148,22 @@ func (fs *OxygenFS) processRequest(r fuse.Request) {
 	//	done(s)
 	//	r.Respond(s)*/
 
-	//case *fuse.RemoveRequest:
-	//	/*n, ok := node.(NodeRemover)
-	//	if !ok {
-	//		done(fuse.EIO) /// XXX or EPERM?
-	//		r.RespondError(fuse.EIO)
-	//		break
-	//	}
-	//	err := n.Remove(r, intr)
-	//	if err != nil {
-	//		done(err)
-	//		r.RespondError(err)
-	//		break
-	//	}
-	//	done(nil)
-	//	r.Respond()*/
+	case *fuse.RemoveRequest:
+		/*n, ok := node.(NodeRemover)
+		if !ok {
+			done(fuse.EIO) /// XXX or EPERM?
+			r.RespondError(fuse.EIO)
+			break
+		}
+		err := n.Remove(r, intr)
+		if err != nil {
+			done(err)
+			r.RespondError(err)
+			break
+		}*/
+		//fmt.
+		done(nil)
+		r.Respond()
 
 	//case *fuse.AccessRequest:
 	//	/*if n, ok := node.(NodeAccesser); ok {
@@ -456,20 +457,43 @@ func (fs *OxygenFS) processRequest(r fuse.Request) {
 		//	r.Respond()*/
 
 	case *fuse.LookupRequest:
+
+		currentNode := int(r.Header.Node)
+		returnNode := 0
+		if _, has := nodeIds[currentNode]; !has {
+			nodeIds[currentNode] = make(map[string]int)
+		}
+
+		if value, has := nodeIds[currentNode][r.Name]; has {
+			returnNode = value
+		} else {
+			returnNode = nodeId
+			nodeIds[currentNode][r.Name] = returnNode
+			nodeId++
+		}
+
+		//		r.Header.Node
 		s := &fuse.LookupResponse{
+			Node:       fuse.NodeID(returnNode),
 			AttrValid:  0,
 			EntryValid: 0,
 		}
+		fmt.Printf("%s %d\n", r.Name, returnNode)
 
 		// Not found
-		//done(fuse.ENOENT)
-		//r.RespondError(fuse.ENOENT)
-
-		done(s)
-		r.Respond(s)
+		if r.Name == "createfile" {
+			done(fuse.ENOENT)
+			r.RespondError(fuse.ENOENT)
+		} else {
+			done(s)
+			r.Respond(s)
+		}
 
 	case *fuse.ForgetRequest:
 		done(nil)
 		r.Respond()
 	}
 }
+
+var nodeIds = make(map[int]map[string]int)
+var nodeId = 2

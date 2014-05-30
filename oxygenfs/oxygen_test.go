@@ -367,7 +367,7 @@ func TestGetRoot(t *testing.T) {
 
 	FuncStart = time.Now()
 
-	files, err := ioutil.ReadDir(mount.Dir)
+	/*files, err := ioutil.ReadDir(mount.Dir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -375,11 +375,13 @@ func TestGetRoot(t *testing.T) {
 	files, err = ioutil.ReadDir(mount.Dir + "/12/45")
 	if err != nil {
 		//t.Fatal(err)
-	}
-
-	for _, f := range files {
+	}*/
+	fmt.Println(os.Create(mount.Dir + "/createfile"))
+	fmt.Println(mount.Dir + "/deletefile")
+	fmt.Println(os.Remove(mount.Dir + "/deletefile"))
+	/*for _, f := range files {
 		fmt.Println(f.Name())
-	}
+	}*/
 }
 
 // Test Write calling Setattr+Write+Flush.
