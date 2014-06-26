@@ -6,15 +6,22 @@ import (
 	"io"
 	"log"
 	"os"
+	"oxygen-go"
 )
 
 import (
-	"bazil.org/fuse"
+	//"code.google.com/p/rsc/fuse"
+	"oxygen-fuse-fs"
+)
+
+const (
+	//OxygenEndpoint = "https://oxygen.atomos.io" //TODO: Change back to normal
+	OxygenEndpoint = "http://localhost:9000"
 )
 
 var Usage = func() {
-	fmt.Fprintf(os.Stderr, "Usage:\n", os.Args[0])
-	fmt.Fprintf(os.Stderr, "  %s <Mount Point>\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Usage:\n")
+	fmt.Fprintf(os.Stderr, "  %s <Mount Point> <Token>\n", os.Args[0])
 	flag.PrintDefaults()
 }
 
@@ -22,10 +29,12 @@ var Usage = func() {
 // of fs and the Nodes and Handles it makes available.  It returns only
 // when the connection has been closed or an unexpected error occurs.
 
-func ServeOxygen(c *fuse.Conn) error {
-	fs := OxygenFS{
-		requests: map[fuse.RequestID]*serveRequest{},
+func ServeOxygen(endpoint, token string, log bool, c *fuse.Conn) error {
+	client := oxygen.NewHttpClient(endpoint, token)
+	if log {
+		client.StartLogging()
 	}
+	fs := NewOxygenFS(client, log)
 
 	for {
 		req, err := c.ReadRequest()
@@ -46,7 +55,7 @@ func main() {
 	flag.Usage = Usage
 	flag.Parse()
 
-	if flag.NArg() != 1 {
+	if flag.NArg() != 2 {
 		Usage()
 		os.Exit(2)
 	}
@@ -57,7 +66,8 @@ func main() {
 	}
 	defer c.Close()
 
-	err = ServeOxygen(c)
+	token := flag.Arg(1)
+	err = ServeOxygen(OxygenEndpoint, token, false, c)
 	if err != nil {
 		log.Fatal(err)
 	}
