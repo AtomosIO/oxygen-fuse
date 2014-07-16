@@ -178,8 +178,6 @@ func (handlesMap *handlesMap) OpenNode(nodeId fuse.NodeID, dir bool, flags fuse.
 	handle, has := handlesMap.nodes[nodeId]
 	handlesMap.RUnlock()
 	if has {
-		fmt.Printf("opened already open node %d\n", nodeId)
-
 		handle.Lock()
 		handle.refs++
 		handle.Unlock()
@@ -218,11 +216,7 @@ func (handlesMap *handlesMap) CreateFile(nodeId fuse.NodeID, name string, flags 
 }
 
 func (handlesMap *handlesMap) CreateDir(nodeId fuse.NodeID, name string, mode os.FileMode) (attr *oxygen.NodeAttributes, err error) {
-	if name[len(name)-1:] != "/" {
-		name = name + "/"
-	}
-
-	attr, err = handlesMap.client.CreatePathFromNode(int64(nodeId), name, NewEmptyReader())
+	attr, err = handlesMap.client.CreatePathFromNode(int64(nodeId), AddTrailingSlash(name), NewEmptyReader())
 	if err != nil {
 		return nil, err
 	}
@@ -419,18 +413,23 @@ func (handle *handle) seekWriter(offset int64) error {
 	if seekSize > 0 {
 		// We have to seek forward, so write the contents of the file in the bytes we
 		// will be skipping.
-		if err := handle.seekReader(handle.trackingWriteCloser.offset, int(seekSize)); err != nil {
-			if err != oxygen.ErrRangeNotSatisfiable {
-				return err
-			}
-
-			// Reader was not able to seek, create a 0 filling reader
-			zeroReader := ioutil.NopCloser(io.LimitReader(NewZeroReader(), seekSize))
-			handle.trackingReadCloser.NewReader(zeroReader, offset)
+		if err := handle.seekReader(handle.trackingWriteCloser.offset, int(seekSize)); err != nil && err != oxygen.ErrRangeNotSatisfiable {
+			return err
 		}
-
 		if err := handle.pipeReaderToWriter(); err != nil {
 			return err
+		}
+
+		// There might be cases where we seekReader and pipe less than seekSize, in
+		// such a case, write 0 bytes until we've fulfilled our seekSize
+		seekSize = offset - handle.trackingWriteCloser.offset
+		// Reader was not able to seek, create a 0 filling reader
+		if seekSize > 0 {
+			zeroReader := ioutil.NopCloser(io.LimitReader(NewZeroReader(), seekSize))
+			handle.trackingReadCloser.NewReader(zeroReader, offset)
+			if err := handle.pipeReaderToWriter(); err != nil {
+				return err
+			}
 		}
 	}
 

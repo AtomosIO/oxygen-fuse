@@ -3,10 +3,11 @@ package main
 import (
 	"bytes"
 	"fmt"
-	//	"io"
+	"io"
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
@@ -1766,7 +1767,6 @@ func TestWriteOutsideFileBoundary(t *testing.T) {
 	}
 	defer mount.Close()
 
-	// Read root directory
 	projectName := client.CreateRandomProject(false)
 
 	rootDirectory := mount.Dir
@@ -1789,6 +1789,137 @@ func TestWriteOutsideFileBoundary(t *testing.T) {
 	n, err := file.Write(writeContents)
 	if err != nil || n != writeLength {
 		t.Fatalf("Failed to write. Wrote %d of %d bytes. Error: %s\n", n, writeLength, err)
+	}
+}
+
+//const testGitRepo = "https://github.com/hesamrabeti/PyCompute"
+const testGitRepo = "https://github.com/dotcloud/docker.git"
+
+//const testGitRepo = "https://github.com/GoodBoyDigital/pixi.js.git"
+
+func TestGitClone(t *testing.T) {
+	// Create client and user
+	client := NewTitaniumClient(TestTitaniumEndpoint)
+	client.CreateRandomUser()
+
+	mount, err := CreateMountServeOxygenFSInTempDir(client.token, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mount.Close()
+
+	// Create project
+	projectName := client.CreateRandomProject(false)
+	projectDirectory := fmt.Sprintf("%s/%s/%s/", mount.Dir, client.username, projectName)
+
+	// Run clone command in project directory on oxygen-fs
+	cmd := exec.Command("git", "clone", testGitRepo)
+	cmd.Dir = projectDirectory
+	err = cmd.Run()
+	if err != nil {
+		t.Fatalf("Error while cloning repo to oxygen-fs: %s\n", err)
+	}
+
+	// Clone repo onto local disk
+	expectedDirectory, err := ioutil.TempDir("", "oxygenfstest")
+	if err != nil {
+		t.Fatalf("Error while creating temp dir for cloning repo: %s\n", err)
+	}
+	cmd = exec.Command("git", "clone", testGitRepo)
+	cmd.Dir = expectedDirectory
+	err = cmd.Run()
+	if err != nil {
+		t.Fatalf("Error while cloning repo to local disk: %s\n", err)
+	}
+
+	// Verify contents of repo with local cloned copy
+	DirectoryEqual(projectDirectory, expectedDirectory, t)
+}
+
+func DirectoryEqual(dir, expectedDir string, t *testing.T) {
+	expectedDirEntries, err := ioutil.ReadDir(expectedDir)
+	if err != nil {
+		t.Fatalf("Unable to read directory %s: %s", expectedDir, err)
+	}
+
+	dirEntries, err := ioutil.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("Unable to read directory %s: %s", dir, err)
+	}
+
+	if len(expectedDirEntries) != len(dirEntries) {
+		t.Fatalf("Number of entries in directory do not match expected value. Got %d, Expected %d.",
+			len(dirEntries), len(expectedDirEntries))
+	}
+
+outerFor:
+	for _, dirEntry := range dirEntries {
+		if dirEntry.Name() == ".git" {
+			continue outerFor
+		}
+
+		fileName := AddTrailingSlash(dir) + dirEntry.Name()
+
+		// Recursively verify directories
+		if dirEntry.IsDir() {
+			DirectoryEqual(fileName, AddTrailingSlash(expectedDir)+dirEntry.Name(), t)
+			continue
+		}
+
+		for _, expectedDirEntry := range expectedDirEntries {
+			if expectedDirEntry.Name() == dirEntry.Name() {
+				expectedFileName := AddTrailingSlash(expectedDir) + expectedDirEntry.Name()
+				if expectedDirEntry.Size() == dirEntry.Size() {
+					FileEqual(fileName, expectedFileName, t)
+				} else {
+					t.Errorf("File has wrong size %s: Got %d, Expected %d.\n", expectedFileName,
+						dirEntry.Size(), expectedDirEntry.Size())
+				}
+				continue outerFor
+			}
+		}
+
+		t.Errorf("Could not find entry: %s\n", fileName)
+	}
+}
+
+func FileEqual(fileName, expectedFileName string, t *testing.T) {
+	file, err := os.Open(fileName)
+	if err != nil {
+		t.Errorf("Error while opening file %s: %s\n", fileName, err)
+	}
+	defer file.Close()
+
+	expectedFile, err := os.Open(expectedFileName)
+	if err != nil {
+		t.Errorf("Error while opening file %s: %s\n", expectedFileName, err)
+	}
+	defer expectedFile.Close()
+
+	index := 0
+	buf := make([]byte, 4096)
+	expectedBuf := make([]byte, 4096)
+	for {
+		fn, ferr := file.Read(buf)
+		en, eerr := expectedFile.Read(expectedBuf)
+		if ferr != eerr {
+			t.Fatalf("Errors do not match: \n%s -> %s\n%s -> %s\n", fileName, ferr,
+				expectedFileName, eerr)
+		}
+		if fn != en {
+			t.Fatalf("Errors do not match: \n%s -> %d\n%s -> %d\n", fileName, fn,
+				expectedFileName, en)
+		}
+		if !bytes.Equal(buf[:fn], expectedBuf[:en]) {
+			t.Fatalf("Buffers did not match. %s and %s.", fileName, expectedFileName)
+		}
+		if ferr != nil {
+			if ferr != io.EOF {
+				t.Fatal(ferr)
+			}
+			return
+		}
+		index++
 	}
 }
 

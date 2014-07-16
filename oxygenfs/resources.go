@@ -132,6 +132,13 @@ func RandomByteSlice(length int) []byte {
 	return bytes
 }
 
+func AddTrailingSlash(str string) string {
+	if str[len(str)-1:] != "/" {
+		return str + "/"
+	}
+	return str
+}
+
 type TrackingReadCloser struct {
 	readCloser io.ReadCloser
 	offset     int64

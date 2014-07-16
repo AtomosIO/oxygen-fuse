@@ -221,6 +221,7 @@ func (fs *OxygenFS) HandleCreateRequest(request *fuse.CreateRequest) {
 		fs.Done(request.Hdr())
 		debug.PrintStack()
 		fmt.Println(request)
+		fmt.Println(err)
 		request.RespondError(fuse.EIO)
 		return
 	}
