@@ -1792,8 +1792,9 @@ func TestWriteOutsideFileBoundary(t *testing.T) {
 	}
 }
 
-//const testGitRepo = "https://github.com/hesamrabeti/PyCompute"
-const testGitRepo = "https://github.com/dotcloud/docker.git"
+const testGitRepo = "https://github.com/hesamrabeti/PyCompute"
+
+//const testGitRepo = "https://github.com/dotcloud/docker.git"
 
 //const testGitRepo = "https://github.com/GoodBoyDigital/pixi.js.git"
 
