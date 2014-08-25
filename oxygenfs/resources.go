@@ -40,7 +40,7 @@ type CreateUserRequest struct {
 }
 
 type CreateProjectRequest struct {
-	ProjectName string `json:"project_name"`
+	ProjectName string `json:"name"`
 	Token       string `json:"token"`
 	Public      bool   `json:"public"`
 }
@@ -53,25 +53,35 @@ type CreateTokenRequest struct {
 type CreateTokenResponse struct {
 	Token    string `json:"token,omitempty"`
 	Username string `json:"username,omitempty"`
+	Response
+}
+
+type Response struct {
+	Code        int    `json:"code"`
+	Description string `json:"description"`
 }
 
 func (client *TitaniumClient) CreateToken() {
-	// Create an invalid request with all incorrect fields
-
 	request := CreateTokenRequest{
 		User:     client.username,
 		Password: client.password,
 	}
 
 	response := CreateTokenResponse{}
-	_, respBody, _ := JSONPost(client.endpoint+TOKENS_ENDPOINT, request)
+	_, respBody, err := JSONPost(client.endpoint+TOKENS_ENDPOINT, request)
+
+	if err != nil {
+		panic(err)
+	}
 	json.Unmarshal(respBody, &response)
+	if response.Response.Description != "Success" {
+		panic(response.Response.Description)
+	}
 
 	client.token = response.Token
 }
 
 func (client *TitaniumClient) CreateRandomProject(public bool) string {
-	// Create an invalid request with all incorrect fields
 	projectName := common.RandomString(5)
 
 	request := CreateProjectRequest{
@@ -80,12 +90,21 @@ func (client *TitaniumClient) CreateRandomProject(public bool) string {
 		Public:      public,
 	}
 
-	JSONPost(client.endpoint+PROJECTS_ENDPOINT, request)
+	_, respBody, err := JSONPost(client.endpoint+PROJECTS_ENDPOINT, request)
+
+	if err != nil {
+		panic(err)
+	}
+	response := Response{}
+	json.Unmarshal(respBody, &response)
+	if response.Description != "Success" {
+		panic(response.Description)
+	}
+
 	return projectName
 }
 
 func (client *TitaniumClient) CreateRandomUser() {
-	// Create an invalid request with all incorrect fields
 	client.username = common.RandomUsername()
 	client.email = common.RandomEmail()
 	client.password = common.RandomPassword()
@@ -96,7 +115,17 @@ func (client *TitaniumClient) CreateRandomUser() {
 		Password: client.password,
 	}
 
-	JSONPost(client.endpoint+USERS_ENDPOINT, request)
+	_, respBody, err := JSONPost(client.endpoint+USERS_ENDPOINT, request)
+
+	if err != nil {
+		panic(err)
+	}
+	response := Response{}
+	json.Unmarshal(respBody, &response)
+	if response.Description != "Success" {
+		panic(response.Description)
+	}
+
 	client.CreateToken()
 }
 

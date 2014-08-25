@@ -1792,13 +1792,13 @@ func TestWriteOutsideFileBoundary(t *testing.T) {
 	}
 }
 
-const testGitRepo = "https://github.com/hesamrabeti/PyCompute"
+const testGitRepoPyCompute = "https://github.com/hesamrabeti/PyCompute"
 
 //const testGitRepo = "https://github.com/dotcloud/docker.git"
 
 //const testGitRepo = "https://github.com/GoodBoyDigital/pixi.js.git"
 
-func TestGitClone(t *testing.T) {
+func TestGitClonePyCompute(t *testing.T) {
 	// Create client and user
 	client := NewTitaniumClient(TestTitaniumEndpoint)
 	client.CreateRandomUser()
@@ -1814,7 +1814,7 @@ func TestGitClone(t *testing.T) {
 	projectDirectory := fmt.Sprintf("%s/%s/%s/", mount.Dir, client.username, projectName)
 
 	// Run clone command in project directory on oxygen-fs
-	cmd := exec.Command("git", "clone", testGitRepo)
+	cmd := exec.Command("git", "clone", testGitRepoPyCompute)
 	cmd.Dir = projectDirectory
 	err = cmd.Run()
 	if err != nil {
@@ -1826,7 +1826,7 @@ func TestGitClone(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error while creating temp dir for cloning repo: %s\n", err)
 	}
-	cmd = exec.Command("git", "clone", testGitRepo)
+	cmd = exec.Command("git", "clone", testGitRepoPyCompute)
 	cmd.Dir = expectedDirectory
 	err = cmd.Run()
 	if err != nil {

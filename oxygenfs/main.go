@@ -15,13 +15,15 @@ import (
 )
 
 const (
-	//OxygenEndpoint = "https://oxygen.atomos.io" //TODO: Change back to normal
-	OxygenEndpoint = "http://localhost:9000"
+//OxygenEndpoint = "https://oxygen.atomos.io" //TODO: Change back to normal
+//OxygenEndpoint = "http://localhost:9000"
 )
 
 var Usage = func() {
 	fmt.Fprintf(os.Stderr, "Usage:\n")
-	fmt.Fprintf(os.Stderr, "  %s <Mount Point> <Token>\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "  %s <Endpoint> <Mount Point> <Token>\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Example:\n")
+	fmt.Fprintf(os.Stderr, "  %s https://oxygen.atomos.io /home/user/oxygen AB32ABXX\n", os.Args[0])
 	flag.PrintDefaults()
 }
 
@@ -55,19 +57,21 @@ func main() {
 	flag.Usage = Usage
 	flag.Parse()
 
-	if flag.NArg() != 2 {
+	if flag.NArg() != 3 {
 		Usage()
 		os.Exit(2)
 	}
-	mountpoint := flag.Arg(0)
+
+	endpoint := flag.Arg(0)
+	mountpoint := flag.Arg(1)
 	c, err := fuse.Mount(mountpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer c.Close()
 
-	token := flag.Arg(1)
-	err = ServeOxygen(OxygenEndpoint, token, false, c)
+	token := flag.Arg(2)
+	err = ServeOxygen(endpoint, token, false, c)
 	if err != nil {
 		log.Fatal(err)
 	}
