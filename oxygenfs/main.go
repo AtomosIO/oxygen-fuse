@@ -29,20 +29,27 @@ func ServeOxygen(endpoint, token string, log bool, c *fuse.Conn) error {
 	}
 	fs := NewOxygenFS(client, log)
 
-breakForLoop:
-	for {
-		select {
-		case <-fs.stopChan:
-			break breakForLoop
-		default:
+	requestChannel := make(chan fuse.Request)
+	go func() {
+		for {
 			req, err := c.ReadRequest()
 			if err != nil {
-				if err == io.EOF {
-					break
+				if err != io.EOF {
+					fs.stopChan <- err
+					fmt.Printf("Stopped because %s\n", err)
+					return
 				}
-				return err
+			} else {
+				requestChannel <- req
 			}
+		}
+	}()
 
+	for {
+		select {
+		case err := <-fs.stopChan:
+			return err
+		case req := <-requestChannel:
 			go fs.processRequest(req)
 		}
 	}

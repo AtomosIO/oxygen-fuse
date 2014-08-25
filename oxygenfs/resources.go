@@ -153,9 +153,6 @@ func JSONPost(url string, jsonVar interface{}) (*http.Response, []byte, error) {
 
 func RandomByteSlice(length int) []byte {
 	var bytes = make([]byte, length)
-	//for i := 0; i < length; i++ {
-	//		bytes[i] = byte(rand.Int())
-	//	}
 	rand.Read(bytes)
 	return bytes
 }

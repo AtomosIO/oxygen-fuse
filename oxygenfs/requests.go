@@ -389,7 +389,7 @@ func (fs *OxygenFS) HandleDestroyRequest(request *fuse.DestroyRequest) {
 }
 
 func (fs *OxygenFS) Stop() {
-	fs.stopChan <- true
+	fs.stopChan <- nil
 }
 
 func (fs *OxygenFS) createLookupResponse(nodeAttr *oxygen.NodeAttributes) fuse.LookupResponse {

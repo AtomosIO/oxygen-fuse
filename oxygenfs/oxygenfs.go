@@ -7,6 +7,10 @@ import (
 	"fmt"
 	"github.com/atomosio/oxygen-fuse-fs"
 	"github.com/atomosio/oxygen-go"
+	"log"
+	"net/http"
+	"os"
+	"runtime/pprof"
 	"time"
 )
 
@@ -26,7 +30,7 @@ type OxygenFS struct {
 	requestInterrupts *requestsInterruptMap
 
 	handlesMap *handlesMap
-	stopChan   chan bool
+	stopChan   chan error
 }
 
 var (
@@ -41,14 +45,23 @@ func NewOxygenFS(client oxygen.Client, log bool) *OxygenFS {
 		client:            client,
 		log:               log,
 		handlesMap:        NewHandlesMap(client, log),
-		stopChan:          make(chan bool),
+		stopChan:          make(chan error),
 	}
-
+	//	go startStackServer() // For Debugging
 	return output
 }
 
-func (fs *OxygenFS) processRequest(request fuse.Request) {
+func startStackServer() {
+	serveMux := http.NewServeMux()
+	serveMux.HandleFunc("/printstack", printStack)
+	log.Println(http.ListenAndServe(":10000", serveMux))
+}
 
+func printStack(w http.ResponseWriter, r *http.Request) {
+	pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
+}
+
+func (fs *OxygenFS) processRequest(request fuse.Request) {
 	requestId := request.Hdr().ID
 
 	// Store the interrupt channel for this request
@@ -66,7 +79,7 @@ func (fs *OxygenFS) processRequest(request fuse.Request) {
 		fs.Done(request.Hdr())
 		request.RespondError(fuse.ENOSYS)
 
-		// Init
+	// Init
 	case *fuse.InitRequest:
 		fs.HandleInitRequest(request)
 	// Lookup

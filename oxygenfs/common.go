@@ -83,10 +83,8 @@ func RandomProjectName() string {
 func RandomAlphaNumericByteSlice(length int) []byte {
 	var bytes = make([]byte, length)
 	rand.Read(bytes)
-	//lenSource := len(ALPHANUMERIC)
 	for i, b := range bytes {
 		bytes[i] = ALPHANUMERIC[b%byte(len(ALPHANUMERIC))]
-		//		bytes[i] = ALPHANUMERIC[rand.Intn(lenSource)]
 	}
 	return bytes
 }
