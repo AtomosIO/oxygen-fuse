@@ -26,6 +26,7 @@ type OxygenFS struct {
 	requestInterrupts *requestsInterruptMap
 
 	handlesMap *handlesMap
+	stopChan   chan bool
 }
 
 var (
@@ -40,6 +41,7 @@ func NewOxygenFS(client oxygen.Client, log bool) *OxygenFS {
 		client:            client,
 		log:               log,
 		handlesMap:        NewHandlesMap(client, log),
+		stopChan:          make(chan bool),
 	}
 
 	return output
@@ -51,6 +53,8 @@ func (fs *OxygenFS) processRequest(request fuse.Request) {
 
 	// Store the interrupt channel for this request
 	fs.requestInterrupts.Set(requestId, make(interruptChannel))
+
+	fmt.Printf("%s\n", request)
 
 	switch request := request.(type) {
 	default:
@@ -95,7 +99,7 @@ func (fs *OxygenFS) processRequest(request fuse.Request) {
 	// Flush
 	case *fuse.FlushRequest:
 		fs.HandleFlushRequest(request)
-	// Flush
+	// Fsync
 	case *fuse.FsyncRequest:
 		fs.HandleFsyncRequest(request)
 	// Remove
@@ -110,267 +114,10 @@ func (fs *OxygenFS) processRequest(request fuse.Request) {
 	// Interrupt
 	case *fuse.InterruptRequest:
 		fs.HandleInterruptRequest(request)
+	// Destroy
+	case *fuse.DestroyRequest:
+		fs.HandleDestroyRequest(request)
 	}
-	//fmt.Printf("DONE -> %s\n", request)
 
 	// TODO: Check to make sure every request was 'Done'ed
 }
-
-//case *fuse.StatfsRequest:
-//	/*s := &fuse.StatfsResponse{}
-//	if fs, ok := c.fs.(FSStatfser); ok {
-//		if err := fs.Statfs(r, s, intr); err != nil {
-//			done(err)
-//			r.RespondError(err)
-//			break
-//		}
-//	}
-//	done(s)
-//	r.Respond(s)*/
-
-//// Node operations.
-//case *fuse.GetattrRequest:
-//	/*s := &fuse.GetattrResponse{}
-//	if n, ok := node.(NodeGetattrer); ok {
-//		if err := n.Getattr(r, s, intr); err != nil {
-//			done(err)
-//			r.RespondError(err)
-//			break
-//		}
-//	} else {
-//		s.AttrValid = attrValidTime
-//		s.Attr = snode.attr()
-//	}
-//	done(s)
-//	r.Respond(s)*/
-
-//case *fuse.SetattrRequest:
-//	/*s := &fuse.SetattrResponse{}
-//	if n, ok := node.(NodeSetattrer); ok {
-//		if err := n.Setattr(r, s, intr); err != nil {
-//			done(err)
-//			r.RespondError(err)
-//			break
-//		}
-//		done(s)
-//		r.Respond(s)
-//		break
-//	}
-
-//	if s.AttrValid == 0 {
-//		s.AttrValid = attrValidTime
-//	}
-//	s.Attr = snode.attr()
-//	done(s)
-//	r.Respond(s)*/
-
-//case *fuse.WriteRequest:
-//	/*shandle := c.getHandle(r.Handle)
-//	if shandle == nil {
-//		done(fuse.ESTALE)
-//		r.RespondError(fuse.ESTALE)
-//		return
-//	}
-
-//	s := &fuse.WriteResponse{}
-//	if h, ok := shandle.handle.(HandleWriter); ok {
-//		if err := h.Write(r, s, intr); err != nil {
-//			done(err)
-//			r.RespondError(err)
-//			break
-//		}
-//		done(s)
-//		r.Respond(s)
-//		break
-//	}
-//	done(fuse.EIO)
-//	r.RespondError(fuse.EIO)*/
-
-//case *fuse.FlushRequest:
-//	/*shandle := c.getHandle(r.Handle)
-//	if shandle == nil {
-//		done(fuse.ESTALE)
-//		r.RespondError(fuse.ESTALE)
-//		return
-//	}
-//	handle := shandle.handle
-
-//	if h, ok := handle.(HandleFlusher); ok {
-//		if err := h.Flush(r, intr); err != nil {
-//			done(err)
-//			r.RespondError(err)
-//			break
-//		}
-//	}
-//	done(nil)
-//	r.Respond()*/
-
-//case *fuse.ReleaseRequest:
-//	/*shandle := c.getHandle(r.Handle)
-//	if shandle == nil {
-//		done(fuse.ESTALE)
-//		r.RespondError(fuse.ESTALE)
-//		return
-//	}
-//	handle := shandle.handle
-
-//	// No matter what, release the handle.
-//	c.dropHandle(r.Handle)
-
-//	if h, ok := handle.(HandleReleaser); ok {
-//		if err := h.Release(r, intr); err != nil {
-//			done(err)
-//			r.RespondError(err)
-//			break
-//		}
-//	}
-//	done(nil)
-//	r.Respond()*/
-
-//case *fuse.DestroyRequest:
-//	/*if fs, ok := c.fs.(FSDestroyer); ok {
-//		fs.Destroy()
-//	}*/
-//	done(nil)
-//	r.Respond()
-
-//case *fuse.RenameRequest:
-//	/*c.meta.Lock()
-//	var newDirNode *serveNode
-//	if int(r.NewDir) < len(c.node) {
-//		newDirNode = c.node[r.NewDir]
-//	}
-//	c.meta.Unlock()
-//	if newDirNode == nil {
-//		c.debug(renameNewDirNodeNotFound{
-//			Request: r.Hdr(),
-//			In:      r,
-//		})
-//		done(fuse.EIO)
-//		r.RespondError(fuse.EIO)
-//		break
-//	}
-//	n, ok := node.(NodeRenamer)
-//	if !ok {
-//		done(fuse.EIO) // XXX or EPERM like Mkdir?
-//		r.RespondError(fuse.EIO)
-//		break
-//	}
-//	err := n.Rename(r, newDirNode.node, intr)
-//	if err != nil {
-//		done(err)
-//		r.RespondError(err)
-//		break
-//	}
-//	done(nil)
-//	r.Respond()*/
-
-//case *fuse.MknodRequest:
-//	/*n, ok := node.(NodeMknoder)
-//	if !ok {
-//		done(fuse.EIO)
-//		r.RespondError(fuse.EIO)
-//		break
-//	}
-//	n2, err := n.Mknod(r, intr)
-//	if err != nil {
-//		done(err)
-//		r.RespondError(err)
-//		break
-//	}
-//	s := &fuse.LookupResponse{}
-//	c.saveLookup(s, snode, r.Name, n2)
-//	done(s)
-//	r.Respond(s)*/
-
-//case *fuse.FsyncRequest:
-//	/*n, ok := node.(NodeFsyncer)
-//	if !ok {
-//		done(fuse.EIO)
-//		r.RespondError(fuse.EIO)
-//		break
-//	}
-//	err := n.Fsync(r, intr)
-//	if err != nil {
-//		done(err)
-//		r.RespondError(err)
-//		break
-//	}
-//	done(nil)
-//	r.Respond()*/
-
-//case *fuse.InterruptRequest:
-//	/*c.meta.Lock()
-//	ireq := c.req[r.IntrID]
-//	if ireq != nil && ireq.Intr != nil {
-//		close(ireq.Intr)
-//		ireq.Intr = nil
-//	}
-//	c.meta.Unlock()
-//	done(nil)
-//	r.Respond()*/
-
-//case *fuse.CreateRequest:
-//	/*n, ok := node.(NodeCreater)
-//	if !ok {
-//		// If we send back ENOSYS, FUSE will try mknod+open.
-//		done(fuse.EPERM)
-//		r.RespondError(fuse.EPERM)
-//		break
-//	}MountOxygenFSInTempDir
-//	s := &fuse.CreateResponse{OpenResponse: fuse.OpenResponse{Flags: fuse.OpenDirectIO}}
-//	n2, h2, err := n.Create(r, s, intr)
-//	if err != nil {
-//		done(err)
-//		r.RespondError(err)
-//		break
-//	}
-//	c.saveLookup(&s.LookupResponse, snode, r.Name, n2)
-//	s.Handle = c.saveHandle(h2, hdr.Node)
-//	done(s)
-//	r.Respond(s)*/
-
-//case *fuse.AccessRequest:
-//	/*if n, ok := node.(NodeAccesser); ok {
-//		if err := n.Access(r, intr); err != nil {
-//			done(err)
-//			r.RespondError(err)
-//			break
-//		}
-//	}
-//	done(nil)
-//	r.Respond()*/
-
-//case *fuse.MkdirRequest:
-//	/*s := &fuse.MkdirResponse{}
-//	n, ok := node.(NodeMkdirer)
-//	if !ok {
-//		done(fuse.EPERM)
-//		r.RespondError(fuse.EPERM)
-//		break
-//	}
-//	n2, err := n.Mkdir(r, intr)
-//	if err != nil {
-//		done(err)
-//		r.RespondError(err)
-//		break
-//	}
-//	c.saveLookup(&s.LookupResponse, snode, r.Name, n2)
-//	done(s)
-//	r.Respond(s)*/
-
-//case *fuse.RemoveRequest:
-/*n, ok := node.(NodeRemover)
-if !ok {
-	done(fuse.EIO) /// XXX or EPERM?
-	r.RespondError(fuse.EIO)
-	break
-}
-err := n.Remove(r, intr)
-if err != nil {
-	done(err)
-	r.RespondError(err)
-	break
-}*/
-//fmt.
-//r.Respond()

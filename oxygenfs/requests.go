@@ -78,6 +78,10 @@ func (fs *OxygenFS) HandleOpenRequest(request *fuse.OpenRequest) {
 }
 
 func (fs *OxygenFS) HandleForgetRequest(request *fuse.ForgetRequest) {
+	if request.Node == 1 {
+		// If we are forgetting root, just shut down
+		fs.stopChan <- true
+	}
 	fs.Done(request.Hdr())
 	request.Respond()
 }
@@ -374,6 +378,12 @@ func (fs *OxygenFS) HandleRenameRequest(request *fuse.RenameRequest) {
 }
 
 func (fs *OxygenFS) HandleInterruptRequest(request *fuse.InterruptRequest) {
+	fs.Done(request.Hdr())
+	request.Respond()
+}
+
+func (fs *OxygenFS) HandleDestroyRequest(request *fuse.DestroyRequest) {
+	fs.stopChan <- true
 	fs.Done(request.Hdr())
 	request.Respond()
 }

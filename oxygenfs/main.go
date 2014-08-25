@@ -10,11 +10,6 @@ import (
 	"os"
 )
 
-const (
-//OxygenEndpoint = "https://oxygen.atomos.io" //TODO: Change back to normal
-//OxygenEndpoint = "http://localhost:9000"
-)
-
 var Usage = func() {
 	fmt.Fprintf(os.Stderr, "Usage:\n")
 	fmt.Fprintf(os.Stderr, "  %s <Endpoint> <Mount Point> <Token>\n", os.Args[0])
@@ -34,16 +29,22 @@ func ServeOxygen(endpoint, token string, log bool, c *fuse.Conn) error {
 	}
 	fs := NewOxygenFS(client, log)
 
+breakForLoop:
 	for {
-		req, err := c.ReadRequest()
-		if err != nil {
-			if err == io.EOF {
-				break
+		select {
+		case <-fs.stopChan:
+			break breakForLoop
+		default:
+			req, err := c.ReadRequest()
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				return err
 			}
-			return err
-		}
 
-		go fs.processRequest(req)
+			go fs.processRequest(req)
+		}
 	}
 
 	return nil
