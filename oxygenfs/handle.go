@@ -1,16 +1,14 @@
 package main
 
 import (
-	//"code.google.com/p/rsc/fuse"
-	"oxygen-fuse-fs"
-
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/atomosio/oxygen-fuse-fs"
+	"github.com/atomosio/oxygen-go"
 	"io"
 	"io/ioutil"
 	"os"
-	"oxygen-go"
 	"sync"
 	"syscall"
 )
@@ -498,7 +496,3 @@ func (handle *handle) pipeReaderToWriter() error {
 
 	return outputError
 }
-
-/*func (handle *handle) GetAttributes() {
-
-}*/

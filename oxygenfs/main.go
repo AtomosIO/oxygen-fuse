@@ -3,15 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/atomosio/oxygen-fuse-fs"
+	"github.com/atomosio/oxygen-go"
 	"io"
 	"log"
 	"os"
-	"oxygen-go"
-)
-
-import (
-	//"code.google.com/p/rsc/fuse"
-	"oxygen-fuse-fs"
 )
 
 const (

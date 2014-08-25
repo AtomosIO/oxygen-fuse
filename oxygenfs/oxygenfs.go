@@ -3,19 +3,15 @@
 package main
 
 import (
-	//"encoding/binary"
-	"fmt"
-	//"hash/fnv"
-	//"reflect"
-	//	"runtime/debug"
-	//"strings"
-	//"code.google.com/p/rsc/fuse"
 	"errors"
-	"oxygen-fuse-fs"
-	//	"os"
-	"oxygen-go"
-	//	"sync"
+	"fmt"
+	"github.com/atomosio/oxygen-fuse-fs"
+	"github.com/atomosio/oxygen-go"
 	"time"
+)
+
+const (
+	ALPHANUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 )
 
 var OxygenClient oxygen.Client

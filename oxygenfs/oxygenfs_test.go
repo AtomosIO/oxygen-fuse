@@ -14,19 +14,7 @@ import (
 	"syscall"
 	"testing"
 	"time"
-	/*	"errors"
-		"log"
-		"os/exec"
-		"runtime"
-		"syscall"
-		"time"
-
-		"oxygen-fuse-fs"
-		"oxygen-fuse-fs/fs"
-		"oxygen-fuse-fs/fs/fstestutil"
-		"oxygen-fuse-fs/fs/fstestutil/record"
-		"oxygen-fuse-fs/fuseutil"
-		"oxygen-fuse-fs/syscallx"*/)
+)
 
 var _ = rand.Float32
 var _ = time.Saturday

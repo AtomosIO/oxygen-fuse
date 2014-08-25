@@ -1,11 +1,10 @@
 package main
 
 import (
-	//"code.google.com/p/rsc/fuse"
 	"fmt"
+	"github.com/atomosio/oxygen-fuse-fs"
+	"github.com/atomosio/oxygen-go"
 	"os"
-	"oxygen-fuse-fs"
-	"oxygen-go"
 	"runtime/debug"
 	"syscall"
 	"time"

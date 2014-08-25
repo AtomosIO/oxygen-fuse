@@ -1,21 +1,13 @@
 package main
 
 import (
-	//"encoding/binary"
+	"crypto/rand"
 	"fmt"
-	//"hash/fnv"
+	"github.com/atomosio/oxygen-fuse-fs"
 	"io"
 	"reflect"
 	"strings"
-	//"sync"
-	//"syscall"
-	//"time"
 	"sync"
-)
-
-import (
-	//"code.google.com/p/rsc/fuse"
-	"oxygen-fuse-fs"
 )
 
 func Debug(msg fmt.Stringer) {
@@ -74,4 +66,23 @@ type EmptyReader struct{}
 
 func (reader *EmptyReader) Read(p []byte) (n int, err error) {
 	return 0, io.EOF
+}
+
+func RandomString(length int) string {
+	return string(RandomAlphaNumericByteSlice(length))
+}
+
+func RandomProjectName() string {
+	return RandomString(5)
+}
+
+func RandomAlphaNumericByteSlice(length int) []byte {
+	var bytes = make([]byte, length)
+	rand.Read(bytes)
+	//lenSource := len(ALPHANUMERIC)
+	for i, b := range bytes {
+		bytes[i] = ALPHANUMERIC[b%byte(len(ALPHANUMERIC))]
+		//		bytes[i] = ALPHANUMERIC[rand.Intn(lenSource)]
+	}
+	return bytes
 }

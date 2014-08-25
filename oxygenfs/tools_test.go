@@ -3,12 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/atomosio/oxygen-fuse-fs"
 	"io/ioutil"
 	"log"
 	"os"
-	"oxygen-fuse-fs"
-	//	"oxygen-go"
-	//"testing"
 	"time"
 )
 
