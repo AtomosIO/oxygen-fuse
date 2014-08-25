@@ -1,14 +1,4 @@
-How to start developing oxygen-fuse-fs:
-  - mkdir ~/atomos
-  - cd ~/atomos
-  - git clone https://github.com/hesamrabeti/oxygen-fuse-fs
-  - git clone https://github.com/githubnemo/CompileDaemon.git
-  - cd CompileDaemon
-  - go build
-  - cd ../oxygen-fuse-fs/oxygenfs
-  - ../../CompileDaemon/CompileDaemon -command="go test -cover" &
-
-
+Heavily modified adaptation of bazil.org/fuse for the Atomos Oxygen system.
 
 <<<<<<<<<<<<<<<<<< TEXT BELOW IS FROM BAZIL.ORG/FUSE <<<<<<<<<<<<<<<<<<
 
