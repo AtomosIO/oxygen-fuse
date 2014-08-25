@@ -10,6 +10,10 @@ import (
 	"sync"
 )
 
+const (
+	MIN_PASSWORD_LENGTH = 6
+)
+
 func Debug(msg fmt.Stringer) {
 	fmt.Println(msg.String())
 }
@@ -85,4 +89,20 @@ func RandomAlphaNumericByteSlice(length int) []byte {
 		//		bytes[i] = ALPHANUMERIC[rand.Intn(lenSource)]
 	}
 	return bytes
+}
+
+func RandomUsername() string {
+	return string(RandomAlphaNumericByteSlice(5))
+}
+
+func RandomEmail() string {
+	// Really hackie. Use a StringBuilder construct.
+	output := append(RandomAlphaNumericByteSlice(5), byte('@'))
+	output = append(output, RandomAlphaNumericByteSlice(5)...)
+	output = append(output, []byte(".com")...)
+	return string(output)
+}
+
+func RandomPassword() string {
+	return string(RandomAlphaNumericByteSlice(MIN_PASSWORD_LENGTH))
 }

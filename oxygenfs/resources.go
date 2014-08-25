@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"common"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
@@ -82,7 +81,7 @@ func (client *TitaniumClient) CreateToken() {
 }
 
 func (client *TitaniumClient) CreateRandomProject(public bool) string {
-	projectName := common.RandomString(5)
+	projectName := RandomString(5)
 
 	request := CreateProjectRequest{
 		ProjectName: projectName,
@@ -105,9 +104,9 @@ func (client *TitaniumClient) CreateRandomProject(public bool) string {
 }
 
 func (client *TitaniumClient) CreateRandomUser() {
-	client.username = common.RandomUsername()
-	client.email = common.RandomEmail()
-	client.password = common.RandomPassword()
+	client.username = RandomUsername()
+	client.email = RandomEmail()
+	client.password = RandomPassword()
 
 	request := CreateUserRequest{
 		Username: client.username,
