@@ -54,7 +54,7 @@ func (fs *OxygenFS) processRequest(request fuse.Request) {
 	// Store the interrupt channel for this request
 	fs.requestInterrupts.Set(requestId, make(interruptChannel))
 
-	fmt.Printf("%s\n", request)
+	//fmt.Printf("%s\n", request)
 
 	switch request := request.(type) {
 	default:
