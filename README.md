@@ -1,7 +1,7 @@
 IMPORTANT
 ------------------------------------
 Don't forget run the following command in order to allow mounts without admin 
-privilages:
+privileges:
 
     sudo adduser $USER fuse
 
