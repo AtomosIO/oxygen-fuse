@@ -114,9 +114,9 @@ func (fs *OxygenFS) HandleReadRequest(request *fuse.ReadRequest) {
 	// Perform read
 	data, err := currentHandle.Read(request.Offset, request.Size)
 	switch err {
-	case nil, oxygen.ErrRangeNotSatisfiable:
+	case nil, oxygengo.ErrRangeNotSatisfiable:
 		break
-	case oxygen.ErrNotEnoughPermissions:
+	case oxygengo.ErrNotEnoughPermissions:
 		fs.Done(request.Hdr())
 		debug.PrintStack()
 		fmt.Println(request)
@@ -202,8 +202,8 @@ func (fs *OxygenFS) HandleSetattrRequest(request *fuse.SetattrRequest) {
 	})
 }
 
-func SetMode(nodeAttr *oxygen.NodeAttributes) (mode os.FileMode) {
-	if nodeAttr.Type == oxygen.DIRECTORY {
+func SetMode(nodeAttr *oxygengo.NodeAttributes) (mode os.FileMode) {
+	if nodeAttr.Type == oxygengo.DIRECTORY {
 		mode = mode | os.ModeDir
 	}
 	mode = mode | os.ModePerm
@@ -215,7 +215,7 @@ func (fs *OxygenFS) HandleCreateRequest(request *fuse.CreateRequest) {
 	switch err {
 	case nil:
 		break
-	case oxygen.ErrNotEnoughPermissions:
+	case oxygengo.ErrNotEnoughPermissions:
 		fs.Done(request.Hdr())
 		debug.PrintStack()
 		fmt.Println(request)
@@ -276,7 +276,7 @@ func (fs *OxygenFS) HandleWriteRequest(request *fuse.WriteRequest) {
 	switch err {
 	case nil:
 		break
-	case oxygen.ErrNotEnoughPermissions:
+	case oxygengo.ErrNotEnoughPermissions:
 		fs.Done(request.Hdr())
 		debug.PrintStack()
 		fmt.Println(request)
@@ -299,7 +299,7 @@ func (fs *OxygenFS) HandleWriteRequest(request *fuse.WriteRequest) {
 func (fs *OxygenFS) HandleRemoveRequest(request *fuse.RemoveRequest) {
 	currentNode := int64(request.Header.Node)
 	err := fs.client.DeleteFromNode(currentNode, request.Name)
-	if err == oxygen.ErrDirectoryNotEmpty {
+	if err == oxygengo.ErrDirectoryNotEmpty {
 		// Directory not empty
 		fs.Done(request.Hdr())
 		request.RespondError(fuse.Errno(syscall.ENOTEMPTY))
@@ -321,7 +321,7 @@ func (fs *OxygenFS) HandleMkdirRequest(request *fuse.MkdirRequest) {
 	attr, err := fs.handlesMap.CreateDir(request.Node, request.Name, request.Mode)
 	switch err {
 	case nil:
-	case oxygen.ErrNotEnoughPermissions:
+	case oxygengo.ErrNotEnoughPermissions:
 		fs.Done(request.Hdr())
 		debug.PrintStack()
 		fmt.Println(request)
@@ -359,7 +359,7 @@ func (fs *OxygenFS) HandleRenameRequest(request *fuse.RenameRequest) {
 
 	switch err {
 	case nil:
-	case oxygen.ErrNotEnoughPermissions:
+	case oxygengo.ErrNotEnoughPermissions:
 		fs.Done(request.Hdr())
 		debug.PrintStack()
 		fmt.Println(request)
@@ -393,7 +393,7 @@ func (fs *OxygenFS) Stop() {
 	fs.stopChan <- nil
 }
 
-func (fs *OxygenFS) createLookupResponse(nodeAttr *oxygen.NodeAttributes) fuse.LookupResponse {
+func (fs *OxygenFS) createLookupResponse(nodeAttr *oxygengo.NodeAttributes) fuse.LookupResponse {
 	// Create response structure
 	return fuse.LookupResponse{
 		Node:       fuse.NodeID(nodeAttr.Id),

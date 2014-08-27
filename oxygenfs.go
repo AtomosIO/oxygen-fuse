@@ -19,13 +19,13 @@ const (
 	ALPHANUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 )
 
-var OxygenClient oxygen.Client
+var OxygenClient oxygengo.Client
 
 var _ = fmt.Errorf
 var FuncStart time.Time
 
 type OxygenFS struct {
-	client oxygen.Client
+	client oxygengo.Client
 	log    bool
 
 	requestInterrupts *requestsInterruptMap
@@ -40,7 +40,7 @@ var (
 	ErrJSONUnmarshal = errors.New("Error while unmarshaling JSON")
 )
 
-func NewOxygenFS(client oxygen.Client, log bool) *OxygenFS {
+func NewOxygenFS(client oxygengo.Client, log bool) *OxygenFS {
 	output := &OxygenFS{
 		requestInterrupts: NewRequestInterruptsMap(),
 		client:            client,
@@ -57,7 +57,7 @@ func NewOxygenFS(client oxygen.Client, log bool) *OxygenFS {
 // when the connection has been closed or an unexpected error occurs.
 
 func ServeOxygen(endpoint, token string, log bool, c *fuse.Conn) error {
-	client := oxygen.NewHttpClient(endpoint, token)
+	client := oxygengo.NewHttpClient(endpoint, token)
 	if log {
 		client.StartLogging()
 	}
