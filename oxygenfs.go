@@ -91,23 +91,29 @@ func ServeOxygen(endpoint, token string, log bool, c *fuse.Conn) error {
 	return nil
 }
 
-func MountAndServeOxygen(mountpoint, endpoint, token string) {
+func MountAndServeOxygen(mountpoint, endpoint, token string) error {
 	c, err := fuse.Mount(mountpoint)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer c.Close()
 
 	<-c.Ready
 	err = ServeOxygen(endpoint, token, false, c)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// check if the mount process has an error to report
 	if err := c.MountError; err != nil {
-		log.Fatal(err)
+		return err
 	}
+
+	return nil
+}
+
+func Unmount(mountpoint string) error {
+	return fuse.Unmount(mountpoint)
 }
 
 func startStackServer() {
