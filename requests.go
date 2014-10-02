@@ -6,7 +6,6 @@ import (
 
 	"fmt"
 	"os"
-	"runtime/debug"
 	"syscall"
 	"time"
 )
@@ -48,7 +47,7 @@ func (fs *OxygenFS) HandleLookupRequest(request *fuse.LookupRequest) {
 	if err != nil {
 		// Not found
 		fs.Done(request.Hdr())
-		//debug.PrintStack(); fmt.Println(request);
+		//; ;
 
 		request.RespondError(fuse.ENOENT)
 		return
@@ -66,8 +65,6 @@ func (fs *OxygenFS) HandleOpenRequest(request *fuse.OpenRequest) {
 		// TODO: Check for errors
 
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
 
 		request.RespondError(fuse.ENOENT)
 		return
@@ -93,8 +90,6 @@ func (fs *OxygenFS) HandleReadRequest(request *fuse.ReadRequest) {
 	if currentHandle == nil || currentHandle.dir != request.Dir {
 
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
 
 		request.RespondError(fuse.ESTALE)
 		return
@@ -104,8 +99,6 @@ func (fs *OxygenFS) HandleReadRequest(request *fuse.ReadRequest) {
 	if !currentHandle.readable {
 
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
 
 		request.RespondError(fuse.EPERM)
 		return
@@ -114,18 +107,16 @@ func (fs *OxygenFS) HandleReadRequest(request *fuse.ReadRequest) {
 	// Perform read
 	data, err := currentHandle.Read(request.Offset, request.Size)
 	switch err {
-	case nil, oxygengo.ErrRangeNotSatisfiable:
+	case nil, oxygen.ErrRangeNotSatisfiable:
 		break
-	case oxygengo.ErrNotEnoughPermissions:
+	case oxygen.ErrNotEnoughPermissions:
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
+
 		request.RespondError(fuse.EPERM)
 		return
 	default:
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
+
 		request.RespondError(fuse.EIO)
 		return
 	}
@@ -151,9 +142,7 @@ func (fs *OxygenFS) HandleGetattrRequest(request *fuse.GetattrRequest) {
 	if err != nil {
 		// Not found
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(err)
-		fmt.Println(request)
+
 		request.RespondError(fuse.ENOENT)
 		return
 	}
@@ -180,8 +169,6 @@ func (fs *OxygenFS) HandleSetattrRequest(request *fuse.SetattrRequest) {
 	if err != nil {
 		// Not found
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
 
 		request.RespondError(fuse.ENOENT)
 		return
@@ -202,8 +189,8 @@ func (fs *OxygenFS) HandleSetattrRequest(request *fuse.SetattrRequest) {
 	})
 }
 
-func SetMode(nodeAttr *oxygengo.NodeAttributes) (mode os.FileMode) {
-	if nodeAttr.Type == oxygengo.DIRECTORY {
+func SetMode(nodeAttr *oxygen.NodeAttributes) (mode os.FileMode) {
+	if nodeAttr.Type == oxygen.DIRECTORY {
 		mode = mode | os.ModeDir
 	}
 	mode = mode | os.ModePerm
@@ -215,17 +202,14 @@ func (fs *OxygenFS) HandleCreateRequest(request *fuse.CreateRequest) {
 	switch err {
 	case nil:
 		break
-	case oxygengo.ErrNotEnoughPermissions:
+	case oxygen.ErrNotEnoughPermissions:
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
+
 		request.RespondError(fuse.EPERM)
 		return
 	default:
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
-		fmt.Println(err)
+
 		request.RespondError(fuse.EIO)
 		return
 	}
@@ -256,8 +240,7 @@ func (fs *OxygenFS) HandleWriteRequest(request *fuse.WriteRequest) {
 	currentHandle := fs.handlesMap.GetHandle(request.Handle)
 	if currentHandle == nil || currentHandle.dir == true {
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
+
 		request.RespondError(fuse.ESTALE)
 		return
 	}
@@ -265,8 +248,7 @@ func (fs *OxygenFS) HandleWriteRequest(request *fuse.WriteRequest) {
 	// Make sure handle was opened for writing
 	if !currentHandle.writable {
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
+
 		request.RespondError(fuse.EPERM)
 		return
 	}
@@ -276,17 +258,13 @@ func (fs *OxygenFS) HandleWriteRequest(request *fuse.WriteRequest) {
 	switch err {
 	case nil:
 		break
-	case oxygengo.ErrNotEnoughPermissions:
+	case oxygen.ErrNotEnoughPermissions:
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
 		request.RespondError(fuse.EPERM)
 		return
 	default:
-		fmt.Println(err)
+
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
 		request.RespondError(fuse.EIO)
 		return
 	}
@@ -299,7 +277,7 @@ func (fs *OxygenFS) HandleWriteRequest(request *fuse.WriteRequest) {
 func (fs *OxygenFS) HandleRemoveRequest(request *fuse.RemoveRequest) {
 	currentNode := int64(request.Header.Node)
 	err := fs.client.DeleteFromNode(currentNode, request.Name)
-	if err == oxygengo.ErrDirectoryNotEmpty {
+	if err == oxygen.ErrDirectoryNotEmpty {
 		// Directory not empty
 		fs.Done(request.Hdr())
 		request.RespondError(fuse.Errno(syscall.ENOTEMPTY))
@@ -307,8 +285,6 @@ func (fs *OxygenFS) HandleRemoveRequest(request *fuse.RemoveRequest) {
 	} else if err != nil {
 		// Not found
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
 		request.RespondError(fuse.ENOENT)
 		return
 	}
@@ -321,16 +297,14 @@ func (fs *OxygenFS) HandleMkdirRequest(request *fuse.MkdirRequest) {
 	attr, err := fs.handlesMap.CreateDir(request.Node, request.Name, request.Mode)
 	switch err {
 	case nil:
-	case oxygengo.ErrNotEnoughPermissions:
+	case oxygen.ErrNotEnoughPermissions:
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
+
 		request.RespondError(fuse.EPERM)
 		return
 	default:
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
+
 		request.RespondError(fuse.EIO)
 		return
 	}
@@ -359,17 +333,15 @@ func (fs *OxygenFS) HandleRenameRequest(request *fuse.RenameRequest) {
 
 	switch err {
 	case nil:
-	case oxygengo.ErrNotEnoughPermissions:
+	case oxygen.ErrNotEnoughPermissions:
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
+
 		request.RespondError(fuse.EPERM)
 		return
 	default:
-		//fmt.Println(err)
+		//
 		fs.Done(request.Hdr())
-		debug.PrintStack()
-		fmt.Println(request)
+
 		request.RespondError(fuse.EIO)
 		return
 	}
@@ -393,7 +365,7 @@ func (fs *OxygenFS) Stop() {
 	fs.stopChan <- nil
 }
 
-func (fs *OxygenFS) createLookupResponse(nodeAttr *oxygengo.NodeAttributes) fuse.LookupResponse {
+func (fs *OxygenFS) createLookupResponse(nodeAttr *oxygen.NodeAttributes) fuse.LookupResponse {
 	// Create response structure
 	return fuse.LookupResponse{
 		Node:       fuse.NodeID(nodeAttr.Id),

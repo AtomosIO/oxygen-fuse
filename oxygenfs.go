@@ -19,13 +19,13 @@ const (
 	ALPHANUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 )
 
-var OxygenClient oxygengo.Client
+var OxygenClient oxygen.Client
 
 var _ = fmt.Errorf
 var FuncStart time.Time
 
 type OxygenFS struct {
-	client oxygengo.Client
+	client oxygen.Client
 	log    bool
 
 	requestInterrupts *requestsInterruptMap
@@ -40,7 +40,7 @@ var (
 	ErrJSONUnmarshal = errors.New("Error while unmarshaling JSON")
 )
 
-func NewOxygenFS(client oxygengo.Client, log bool) *OxygenFS {
+func NewOxygenFS(client oxygen.Client, log bool) *OxygenFS {
 	output := &OxygenFS{
 		requestInterrupts: NewRequestInterruptsMap(),
 		client:            client,
@@ -57,7 +57,7 @@ func NewOxygenFS(client oxygengo.Client, log bool) *OxygenFS {
 // when the connection has been closed or an unexpected error occurs.
 
 func ServeOxygen(endpoint, token string, log bool, c *fuse.Conn) error {
-	client := oxygengo.NewHttpClient(endpoint, token)
+	client := oxygen.NewHttpClient(endpoint, token)
 	if log {
 		client.StartLogging()
 	}
@@ -91,14 +91,17 @@ func ServeOxygen(endpoint, token string, log bool, c *fuse.Conn) error {
 	return nil
 }
 
-func MountAndServeOxygen(mountpoint, endpoint, token string) error {
+func MountAndServeOxygen(mountpoint, endpoint, token string, readyChan chan error) error {
 	c, err := fuse.Mount(mountpoint)
 	if err != nil {
+		readyChan <- err
 		return err
 	}
 	defer c.Close()
 
 	<-c.Ready
+	readyChan <- nil
+
 	err = ServeOxygen(endpoint, token, false, c)
 	if err != nil {
 		return err

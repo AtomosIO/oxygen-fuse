@@ -57,18 +57,18 @@ type handle struct {
 
 	handlesMap *handlesMap
 
-	attr *oxygengo.NodeAttributes
+	attr *oxygen.NodeAttributes
 
 	refs int
 }
 
 type writerCloseMessage struct {
-	attr *oxygengo.NodeAttributes
+	attr *oxygen.NodeAttributes
 	err  error
 }
 
 type handlesMap struct {
-	client oxygengo.Client
+	client oxygen.Client
 
 	sync.RWMutex
 	handles         map[fuse.HandleID]*handle
@@ -78,7 +78,7 @@ type handlesMap struct {
 	log bool
 }
 
-func NewHandlesMap(client oxygengo.Client, log bool) *handlesMap {
+func NewHandlesMap(client oxygen.Client, log bool) *handlesMap {
 	return &handlesMap{
 		handles: make(map[fuse.HandleID]*handle),
 		nodes:   make(map[fuse.NodeID]*handle),
@@ -196,7 +196,7 @@ func (handlesMap *handlesMap) OpenNode(nodeId fuse.NodeID, dir bool, flags fuse.
 }
 
 func (handlesMap *handlesMap) CreateFile(nodeId fuse.NodeID, name string, flags fuse.OpenFlags) (handle *handle, err error) {
-	var attr *oxygengo.NodeAttributes
+	var attr *oxygen.NodeAttributes
 	if FlagCreateSet(flags) && FlagExclusiveSet(flags) {
 		attr, err = handlesMap.client.CreatePathFromNode(int64(nodeId), name, NewEmptyReader())
 	} else {
@@ -214,7 +214,7 @@ func (handlesMap *handlesMap) CreateFile(nodeId fuse.NodeID, name string, flags 
 	return handle, err
 }
 
-func (handlesMap *handlesMap) CreateDir(nodeId fuse.NodeID, name string, mode os.FileMode) (attr *oxygengo.NodeAttributes, err error) {
+func (handlesMap *handlesMap) CreateDir(nodeId fuse.NodeID, name string, mode os.FileMode) (attr *oxygen.NodeAttributes, err error) {
 	attr, err = handlesMap.client.CreatePathFromNode(int64(nodeId), AddTrailingSlash(name), NewEmptyReader())
 	if err != nil {
 		return nil, err
@@ -237,7 +237,7 @@ func (handle *handle) populateDirectoryEntries() error {
 	defer reader.Close()
 
 	// FUSE says we're reading a directory, make sure node is actually a directory
-	if attr.Type != oxygengo.DIRECTORY {
+	if attr.Type != oxygen.DIRECTORY {
 		return ErrNotADirectory
 	}
 
@@ -412,7 +412,7 @@ func (handle *handle) seekWriter(offset int64) error {
 	if seekSize > 0 {
 		// We have to seek forward, so write the contents of the file in the bytes we
 		// will be skipping.
-		if err := handle.seekReader(handle.trackingWriteCloser.offset, int(seekSize)); err != nil && err != oxygengo.ErrRangeNotSatisfiable {
+		if err := handle.seekReader(handle.trackingWriteCloser.offset, int(seekSize)); err != nil && err != oxygen.ErrRangeNotSatisfiable {
 			return err
 		}
 		if err := handle.pipeReaderToWriter(); err != nil {
