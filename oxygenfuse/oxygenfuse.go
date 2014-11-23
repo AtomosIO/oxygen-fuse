@@ -29,5 +29,8 @@ func main() {
 	mountpoint := flag.Arg(1)
 	token := flag.Arg(2)
 
-	oxygenfuse.MountAndServeOxygen(mountpoint, endpoint, token)
+	if err := oxygenfuse.MountAndServeOxygen(mountpoint, endpoint, token, nil); err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
 }

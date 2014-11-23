@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"sync"
 	"syscall"
 )
@@ -47,7 +48,7 @@ type handle struct {
 	// With New Node: (write data)
 	newNode bool
 
-	// Determines whether a write is neccesary on flush
+	// Used to hold directory data while client reads it
 	data []byte
 
 	trackingReadCloser  *TrackingReadCloser
@@ -143,7 +144,7 @@ func (handlesMap *handlesMap) NewHandle(nodeId fuse.NodeID, dir bool, flags fuse
 	handlesMap.Unlock()
 
 	newHandle.id = handleId
-	//handlesMap.Logf("New Handle: %d\n%+v\n", handleId, newHandle)
+	handlesMap.Logf("New Handle: %d\n%+v\n", handleId, newHandle)
 	return newHandle
 }
 
@@ -275,6 +276,10 @@ func (handle *handle) populateDirectoryEntries() error {
 	return nil
 }
 
+func (handle *handle) Logf(format string, args ...interface{}) {
+	handle.handlesMap.Logf("Handle "+strconv.FormatInt(int64(handle.id), 10)+" "+format, args...)
+}
+
 // Read from directory or file. Seeking while reading from a file causes a new HTTP
 // GET request, increasing latency.
 func (handle *handle) Read(offset int64, size int) ([]byte, error) {
@@ -300,6 +305,8 @@ func (handle *handle) Flush() error {
 }
 
 func (handle *handle) read(offset int64, size int) ([]byte, error) {
+	handle.Logf("Read: %d bytes at %d\n", size, offset)
+
 	if handle.dir {
 		return handle.readDir(offset, size)
 	}
@@ -379,6 +386,8 @@ func (handle *handle) write(data []byte, offset int64) (int, error) {
 	default:
 	}
 
+	handle.Logf("Write: %d bytes at %d\n", len(data), offset)
+
 	return handle.trackingWriteCloser.Write(data)
 }
 
@@ -455,6 +464,8 @@ func (handle *handle) flush() error {
 		if !handle.newNode {
 			// Write the rest of the file
 			seekOffset := handle.trackingWriteCloser.offset
+			// It's ok if we get a "Range not satisfiable error", just ignore it
+			// and close the writer.
 			if err := handle.seekReader(seekOffset, -1); err == nil {
 				handle.pipeReaderToWriter()
 			}

@@ -72,6 +72,8 @@ func ServeOxygen(endpoint, token string, log bool, c *fuse.Conn) error {
 					fs.stopChan <- err
 					//fmt.Printf("Stopped because %s\n", err)
 					return
+				} else {
+					time.Sleep(time.Millisecond)
 				}
 			} else {
 				requestChannel <- req
@@ -94,13 +96,17 @@ func ServeOxygen(endpoint, token string, log bool, c *fuse.Conn) error {
 func MountAndServeOxygen(mountpoint, endpoint, token string, readyChan chan error) error {
 	c, err := fuse.Mount(mountpoint)
 	if err != nil {
-		readyChan <- err
+		if readyChan != nil {
+			readyChan <- err
+		}
 		return err
 	}
 	defer c.Close()
 
 	<-c.Ready
-	readyChan <- nil
+	if readyChan != nil {
+		readyChan <- nil
+	}
 
 	err = ServeOxygen(endpoint, token, false, c)
 	if err != nil {
